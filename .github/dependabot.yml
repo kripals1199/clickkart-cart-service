@@ -1,0 +1,33 @@
+# Automated dependency and security updates.
+# Maven: catches CVEs in Spring Boot / Spring Cloud / transitive deps between manual reviews.
+# github-actions: keeps the CI workflow's own action versions current (actions/checkout etc.).
+version: 2
+updates:
+  - package-ecosystem: maven
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    labels: [dependencies]
+    commit-message:
+      prefix: "chore(deps)"
+    # Spring Boot / Spring Cloud upgrades change managed dependency versions across the whole
+    # tree and must stay deliberate, not automated. MINOR is ignored as well as major: this
+    # project pins Boot 4.0.x against Cloud 2025.1.x, and those two are release-aligned - a
+    # Boot 4.0 -> 4.1 bump alone can desync them. Dependabot opened exactly that PR before this
+    # rule was tightened. Patch updates (4.0.7 -> 4.0.8) still come through, which is what you
+    # want for security fixes within a release line.
+    ignore:
+      - dependency-name: "org.springframework.boot:*"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "org.springframework.cloud:*"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly
+    labels: [dependencies, ci]
+    commit-message:
+      prefix: "chore(ci)"

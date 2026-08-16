@@ -1,0 +1,34 @@
+# --- Build output ---
+target/
+!.mvn/wrapper/maven-wrapper.jar
+
+# --- Runtime logs ---
+# logback-spring.xml writes here when the service runs locally. These contain real request/audit
+# detail (and, for notification-service, the raw one-time tokens and OTP codes it "dispatches"),
+# so they must never be committed.
+logs/
+
+# --- Local environment / secrets ---
+# .env.example IS committed (placeholders only); any real .env never is.
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.jks
+
+# --- IDE / editor ---
+.settings/
+.classpath
+.project
+.factorypath
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+nbproject/
+
+# --- OS ---
+.DS_Store
+Thumbs.db

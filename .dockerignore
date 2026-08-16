@@ -1,0 +1,29 @@
+# Build context exclusions. The Dockerfile only COPYs pom.xml and src/, so nothing below could
+# ever reach the image - but without this file all of it is still uploaded to the Docker daemon
+# on every build (~3MB/service of target/ plus real application logs), which is pure waste and
+# needlessly hands runtime logs to the build daemon.
+
+# Maven build output - the image builds its own inside the build stage.
+target/
+
+# Runtime logs written by logback-spring.xml when the service is run locally.
+logs/
+
+# Version control and IDE/editor metadata.
+.git/
+.gitignore
+.settings/
+.classpath
+.project
+.factorypath
+.idea/
+*.iml
+.vscode/
+
+# Local env/secret files - must never be uploaded to a build daemon.
+.env
+.env.*
+
+# OS noise.
+.DS_Store
+Thumbs.db
