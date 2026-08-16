@@ -36,6 +36,24 @@
     </properties>
 
     <dependencies>
+        <!-- Spring Boot 4 split autoconfiguration out of spring-boot-autoconfigure into
+             per-technology modules. flyway-core alone gives you the library with no
+             FlywayAutoConfiguration behind it, so Flyway sits on the classpath, the spring.flyway.*
+             properties bind to nothing, and the application starts silently without ever running a
+             migration. This module is what actually wires it up. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-flyway</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
