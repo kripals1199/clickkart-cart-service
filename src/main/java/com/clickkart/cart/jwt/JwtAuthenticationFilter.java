@@ -122,12 +122,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        String correlationId = claims.get(JwtClaimNames.CORRELATION_ID, String.class);
-        if (correlationId == null || correlationId.isBlank()) {
+        String tokenCorrelationId = claims.get(JwtClaimNames.CORRELATION_ID, String.class);
+        if (tokenCorrelationId == null || tokenCorrelationId.isBlank()) {
             handlerExceptionResolver.resolveException(
                     request, response, null,
                     new MissingCorrelationIdException("Token is missing the required correlationId claim"));
             return;
+        }
+
+        // CorrelationIdFilter has already seeded the MDC from the X-Correlation-Id header, which the
+        // Gateway derives from this very claim, so on any real request path the two agree. Keeping the
+        // MDC value authoritative is what makes the access log, this filter, and the id handed to
+        // downstream services one id. Overwriting it here split a single request into two traces:
+        // REQUEST_START logged one id while every outgoing call carried another.
+        String correlationId = MDC.get(MdcKeys.CORRELATION_ID);
+        if (correlationId == null || correlationId.isBlank()) {
+            correlationId = tokenCorrelationId;
+            MDC.put(MdcKeys.CORRELATION_ID, correlationId);
         }
 
         Set<String> roles = parseRoles(claims.get(JwtClaimNames.ROLES, String.class));
@@ -142,11 +153,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         var authentication = new UsernamePasswordAuthenticationToken(principal, null, authorities);
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        MDC.put(MdcKeys.CORRELATION_ID, correlationId);
         try {
             chain.doFilter(request, response);
         } finally {
-            MDC.remove(MdcKeys.CORRELATION_ID);
+            // The correlation id is deliberately left in place. CorrelationIdFilter owns it, and
+            // AccessLogFilter - which wraps this filter - still needs it to log REQUEST_END; removing
+            // it here is why every REQUEST_END line recorded correlationId=null. MdcCleanupFilter runs
+            // outermost and clears the whole MDC, so nothing leaks onto the next pooled request.
             SecurityContextHolder.clearContext();
         }
     }
