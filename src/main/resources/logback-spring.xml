@@ -77,6 +77,7 @@
 
 	<logger name="ACCESS" level="INFO" additivity="false">
 		<appender-ref ref="ASYNC_ACCESS" />
+		<appender-ref ref="CONSOLE" />
 	</logger>
 
 	<logger name="org.springframework" level="INFO" />
